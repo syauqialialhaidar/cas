@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f8f8f8;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #fff;
+        padding: 10px 20px;
+        color: #333;
+      }
+
+      header .logo img {
+        height: 40px;
+      }
+
+      header nav ul {
+        list-style: none;
+        display: flex;
+        gap: 20px;
+      }
+
+      header nav ul li a {
+        text-decoration: none;
+        color: #333;
+        font-size: 20px;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+
+      header nav ul li a:hover {
+        text-decoration: underline;
+        color: #555;
+      }
+
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 80vh; /* Menyesuaikan tinggi layar */
+        width: 90vw; /* Menyesuaikan lebar layar */
+        max-width: 600px; /* Batas maksimum untuk lebar */
+        margin: 30px auto;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      .chat-header {
+        display: flex;
+        justify-content: center;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .chat-message {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+
+      .chat-message img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+
+      .chat-message.user {
+        align-self: flex-end;
+        background-color: #007bff;
+        color: #fff;
+      }
+
+      .chat-message.bot {
+        align-self: flex-start;
+        background-color: #f1f1f1;
+        color: #333;
+      }
+
+      .chat-input {
+        display: flex;
+        gap: 10px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      .chat-input button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .chat-input button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <header>
+      <div class="logo">
+        <img
+          src="{{ url_for('static', filename='icon.png') }}"
+          alt="Logo Skintone Styles"
+          style="height: 100px"
+        />
+      </div>
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('beranda') }}">Home</a></li>
+          <li><a href="{{ url_for('outfit') }}">Outfit</a></li>
+          <li><a href="{{ url_for('deteksi') }}">Deteksi</a></li>
+          <li><a href="{{ url_for('chatbot') }}">Chat</a></li>
+          <li><a href="{{ url_for('profil') }}">Profile</a></li>
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Chatbot Container -->
+    <div class="chat-container">
+      <div class="chat-header">
+        <h2>Chatbot</h2>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-message bot">
+          <img
+            src="{{ url_for('static', filename='Avatar-01.jpeg') }}"
+            alt="Bot"
+          />
+          <span>Halo! Ada yang bisa saya bantu?</span>
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="Ketik pesan Anda di sini..."
+          onkeypress="handleKeyPress(event)"
+        />
+        <button onclick="sendMessage()">Kirim</button>
+      </div>
+    </div>
+
+    <script>
+      const responses = {
+        halo: "Halo! Ada yang bisa saya bantu?",
+        hai: "Hai! Apa kabar?",
+        hallo: "Hallo! Bagaimana hari Anda?",
+        assalamualaikum: "Waalaikumsalam! Ada yang bisa saya bantu?",
+        "selamat pagi": "Selamat pagi! Semoga harimu menyenangkan!",
+        "selamat siang": "Selamat siang! Ada yang bisa saya bantu?",
+        "selamat sore": "Selamat sore! Apa kabar?",
+        "selamat malam": "Selamat malam! Bagaimana hari Anda?",
+        "apa kabar":
+          "Saya baik, terima kasih sudah bertanya! Bagaimana dengan Anda?",
+        "siapa kamu": "Saya adalah chatbot Anda yang siap membantu.",
+        "kamu bisa apa":
+          "Saya bisa membantu menjawab pertanyaan umum. Coba saja tanyakan sesuatu!",
+        "terima kasih": "Sama-sama! Senang bisa membantu.",
+        "sampai jumpa": "Sampai jumpa lagi! Semoga hari Anda menyenangkan!",
+      };
+
+      function sendMessage() {
+        const userInput = document.getElementById("userInput").value.trim();
+        if (!userInput) return;
+
+        const chatMessages = document.getElementById("chatMessages");
+
+        // Tambahkan pesan pengguna
+        const userMessage = document.createElement("div");
+        userMessage.className = "chat-message user";
+        userMessage.innerHTML = `<img src="{{ url_for('static', filename='Avatar-02.jpeg') }}" alt="Bot"/> <span>${userInput}</span>`;
+        chatMessages.appendChild(userMessage);
+
+        // Jawaban bot
+        setTimeout(() => {
+          const botResponse =
+            responses[userInput.toLowerCase()] || "Maaf, saya belum mengerti.";
+          const botMessage = document.createElement("div");
+          botMessage.className = "chat-message bot";
+          botMessage.innerHTML = `<img src="{{ url_for('static', filename='Avatar-01.jpeg') }}" alt="Bot"/> <span>${botResponse}</span>`;
+          chatMessages.appendChild(botMessage);
+
+          // Scroll ke bawah
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 500);
+
+        // Hapus input
+        document.getElementById("userInput").value = "";
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+    </script>
+  </body>
+</html>

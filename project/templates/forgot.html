@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forgot Password</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        text-align: center;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        width: 360px;
+      }
+
+      img.logo {
+        width: 120px;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        color: #333;
+      }
+
+      .login-form input {
+        width: 100%;
+        max-width: 280px;
+        padding: 12px;
+        margin: 0 auto 15px;
+        display: block;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+      }
+
+      .login-form input:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+      }
+
+      .btn-login {
+        width: 100%;
+        max-width: 280px;
+        padding: 12px;
+        background-color: #007bff;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 0 auto;
+        display: block;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .btn-login:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 10px rgba(0, 91, 179, 0.3);
+      }
+
+      .signup-text {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #555;
+      }
+
+      .signup-link {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      .signup-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <img src="{{ url_for('static', filename='icon.png') }}" alt="Logo" class="logo" />
+      <h2>Forgot Password</h2>
+      <form class="login-form" method="POST" action="{{ url_for('forgot') }}">
+        <input type="text" name="name" placeholder="Nama Lengkap" required />
+        <input type="email" name="email" placeholder="Masukan Email" required />
+        <button type="submit" class="btn-login">Kirim</button>
+      </form>
+      <p class="signup-text">
+        Belum Punya Akun? 
+        <a href="{{ url_for('register') }}" class="signup-link">Daftar Sekarang</a>
+      </p>
+      <p class="signup-text">
+        Sudah Punya Akun? 
+        <a href="{{ url_for('login') }}" class="signup-link">Login Sekarang</a>
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+Global Styles
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    line-height: 1.7;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center; /* Menjadikan semua teks berada di tengah */
+}
+
+/* Navbar Styles */
+.navbar {
+    background-color: #333;
+    padding: 15px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    text-align: center;
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.navbar ul li {
+    margin: 0 20px;
+}
+
+.navbar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 10px 15px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-radius: 5px;
+}
+
+.navbar ul li a:hover {
+    color: #333;
+    background-color: #f4b400;
+}
+
+/* Content Section */
+.content {
+    padding: 50px 40px;
+    margin: 30px auto;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    max-width: 800px;
+    width: 90%;
+    line-height: 1.8;
+    text-align: center; /* Semua teks dalam konten ditengahkan */
+}
+
+/* Heading Styles */
+h1, h2 {
+    color: #333;
+    margin-bottom: 25px;
+    font-weight: 700;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f4b400;
+    display: inline-block;
+}
+
+h1 {
+    font-size: 34px;
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 28px;
+    color: #555;
+}
+
+/* Paragraph Styles */
+p {
+    margin: 20px 0;
+    font-size: 18px;
+    padding: 5px 15px;
+    text-align: center; /* Menjadikan teks paragraf di tengah */
+}
+
+/* Button Styles */
+button {
+    background-color: #f4b400;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    font-weight: 600;
+    display: block;
+    margin: 30px auto;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #ff9800;
+    transform: scale(1.05);
+}
+
+/* Footer Styles */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: 40px;
+    font-size: 16px;
+    width: 100%;
+}
+
+footer p {
+    margin: 0;
+}
+
+/* AOS Animations */
+[data-aos="fade-up"] {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-aos="fade-up"].aos-animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Additional Typography */
+blockquote {
+    font-style: italic;
+    color: #666;
+    padding: 10px 20px;
+    border-left: 5px solid #f4b400;
+    margin: 20px 0;
+    text-align: center;
+}
+
+ul {
+    padding-left: 40px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+ul li {
+    line-height: 1.7;
+    text-align: center;
+}
+
+a {
+    color: #f4b400;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}

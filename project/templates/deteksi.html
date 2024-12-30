@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deteksi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      background-color: #2bc0e4;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .back-button:hover {
+      background-color: #199bb5;
+    }
+
+    .back-button i {
+      margin-right: 5px;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 800px;
+    }
+
+    .container h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .container p {
+      font-size: 16px;
+      margin-bottom: 30px;
+      color: #666;
+    }
+
+    .upload-button {
+      background-color: #2bc0e4;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .upload-button:hover {
+      background-color: #199bb5;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(245, 245, 245, 1);
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    #preview {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    #prediction {
+      text-align: left;
+      flex-grow: 1;
+    }
+
+    #prediction h3 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    #prediction p {
+      font-size: 16px;
+      color: #666;
+      margin: 5px 0;
+    }
+
+    .recommendation-button {
+      margin-top: 15px;
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .recommendation-button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Back Button -->
+  <a class="back-button" href="{{ url_for('beranda') }}">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+
+  <!-- Main Content -->
+  <div class="container">
+    <h1>Prediksi Wajah Anda</h1>
+    <p>Jangan Kaget Hasilnya Nanti</p>
+    <button class="upload-button" onclick="triggerFileInput()">Pilih Gambar</button>
+    <input type="file" id="fileInput" accept="image/*" />
+    <div id="result" style="display: none;"></div>
+  </div>
+
+  <script>
+    // Trigger file input when button is clicked
+    function triggerFileInput() {
+      document.getElementById("fileInput").click();
+    }
+
+    // Handle file upload and prediction
+    document.getElementById("fileInput").addEventListener("change", async function (event) {
+      const file = event.target.files[0];
+
+      if (!file) {
+        alert("Klalen? Pilih Gambar e Oh ");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        // Preview uploaded image
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const resultDiv = document.getElementById("result");
+          resultDiv.style.display = "flex";
+          resultDiv.innerHTML = `
+            <img id="preview" src="${e.target.result}" alt="Upload Gambar" />
+            <div id="prediction">
+              <h3>Prediction Result</h3>
+              <p>Delat Oh Lagi Mrediksi</p>
+            </div>`;
+        };
+        reader.readAsDataURL(file);
+
+        // Simulate loading delay
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Send image to server for prediction
+        const response = await fetch("/deteksi", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process the image. Please try again.");
+        }
+
+        const result = await response.json();
+
+        // Display prediction result
+        const predictionDiv = document.getElementById("prediction");
+        predictionDiv.innerHTML = `
+          <h3>Hasil Prediksi </h3>
+          <p><strong>Warna Kulit:</strong> ${result.predicted_class}</p>
+          <a class="recommendation-button" href="{{ url_for('outfit') }}">Lihat Rekomendasi</a>
+        `;
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred: " + error.message);
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skintone Styles</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f8f8f8;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      padding: 10px 20px;
+      color: #333;
+    }
+
+    header .logo img {
+      height: 40px;
+    }
+
+    header nav ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    header nav ul li a {
+      text-decoration: none;
+      color: #333;
+      font-size: 20px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    header nav ul li a:hover {
+      text-decoration: underline;
+      color: #555;
+    }
+
+    .hero {
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .hero .text {
+      padding: 20px;
+      font-size: 18px;
+      color: #333;
+      background-color: #e0e0e0;
+      font-weight: bold;
+    }
+
+    .arrow-icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 30px;
+      color: #333;
+      z-index: 10;
+      cursor: pointer;
+    }
+
+    .arrow-left {
+      left: 20px;
+    }
+
+    .arrow-right {
+      right: 20px;
+    }
+
+    .product-section {
+      padding: 20px 30px;
+      margin-top: 50px;
+    }
+
+    .product-section h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .product-card {
+      display: inline-block;
+      background-color: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+      border: 2px solid #ddd;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .product-card img {
+      width: 100%;
+      height: auto;
+    }
+
+    .product-card .info {
+      padding: 10px;
+    }
+
+    .product-card .info h3 {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .product-card .info p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    footer {
+      background-color: #f8f8f8;
+      /* Background footer putih */
+      color: #333;
+      /* Teks abu-abu gelap */
+      padding: 20px 30px;
+      border-top: 5px solid #ddd;
+      /* Border atas abu-abu muda */
+    }
+
+    footer input,
+    footer textarea {
+      background-color: #fff;
+      /* Input putih */
+      color: #333;
+      /* Teks input abu-abu */
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    footer button {
+      background-color: #555;
+      /* Tombol abu-abu gelap */
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    footer button:hover {
+      background-color: #777;
+      /* Hover abu-abu terang */
+    }
+
+    footer a {
+      color: #555;
+      /* Link abu-abu gelap */
+      margin-right: 10px;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+      color: #777;
+      /* Hover link lebih terang */
+    }
+
+    footer h3 {
+      margin-bottom: 10px;
+    }
+
+    footer .contact-group {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    footer .contact-group>div {
+      flex: 1;
+      margin: 10px;
+    }
+
+    footer .social-icons {
+      display: flex;
+      gap: 15px;
+      font-size: 20px;
+    }
+
+    footer .social-icons a {
+      color: #555;
+      /* Warna ikon abu-abu gelap */
+      transition: color 0.3s;
+    }
+
+    footer .social-icons a:hover {
+      color: #777;
+      /* Hover ikon abu-abu terang */
+    }
+
+    footer p {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    footer .center {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #777;
+      /* Warna footer paling bawah */
+    }
+
+    footer .center p:first-child {
+      color: #333;
+      /* Warna teks © khusus */
+    }
+
+    /* Notifikasi */
+    .notification {
+      display: none;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .error {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='icon.png') }}" alt="Logo Skintone Styles" style="height: 100px" />
+    </div>
+    <nav>
+      <ul>
+        <li><a href="{{ url_for('beranda') }}">Home</a></li>
+        <li><a href="{{ url_for('outfit') }}">Outfit</a></li>
+        <li><a href="{{ url_for('deteksi') }}">Deteksi</a></li>
+        <li><a href="{{ url_for('chatbot') }}">Chat</a></li>
+        <li><a href="{{ url_for('profil') }}">Profile</a></li>
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <i class="fas fa-arrow-left arrow-icon arrow-left" onclick="prevSlide()"></i>
+    <i class="fas fa-arrow-right arrow-icon arrow-right" onclick="nextSlide()"></i>
+
+    <img id="heroImage" src="{{ url_for('static', filename='slide-01.jpg') }}" alt="Hero Image" />
+    <div class="text">
+      <p>
+        Skintone Styles adalah pendekatan fashion yang menyesuaikan pilihan
+        warna dan gaya berdasarkan karakteristik warna kulit individu.
+      </p>
+    </div>
+  </div>
+
+  <div class="product-section">
+    <h2>Rekomendasi Outfit</h2>
+    <div class="product-grid">
+      <div class="product-card">
+        <img src="{{ url_for('static', filename='product-01.jpg') }}" alt="Outfit 1" />
+        <div class="info">
+          <h3>Baju Warna Coklat Muda</h3>
+          <p>Perfect match:<br />- Kulit Gelap<br />- Kulit Sawo Matang</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="contact-group">
+      <div>
+        <h3>SARAN DAN KESAN</h3>
+        <div class="card">
+          <div class="card-header">Add Application Review</div>
+          <div class="card-body">
+            <form id="review-form">
+              <input type="text" id="reviewName" placeholder="NAMA LENGKAP" required />
+              <textarea id="reviewText" rows="4" placeholder="Tulis ulasan Anda..." required></textarea>
+              <button type="submit" id="submitButton">KIRIM</button>
+            </form>
+            <!-- Notification message -->
+            <div id="notification" class="notification"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>IKUTI KAMI</h3>
+        <div class="social-icons">
+          <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+          <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+          <a href="#" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div>
+        <h3>INFO KONTAK</h3>
+        <p><i class="fas fa-phone"></i> +62 812 3456 7890</p>
+        <p><i class="fas fa-envelope"></i> info@skintonestyles.id</p>
+        <p><i class="fas fa-map-marker-alt"></i> Politeknik Harapan Bersama Tegal </p>
+      </div>
+    </div>
+    </div>
+    <div class="center">
+      <p>© 2024 SKINTONE STYLE | INDONESIA</p>
+      <p>Designed with ❤️ by Skintone Styles Team</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('review-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const reviewText = document.getElementById('reviewText');
+      const reviewName = document.getElementById('reviewName');
+      const submitButton = document.getElementById('submitButton');
+      const notification = document.createElement('div');  // Notifikasi div
+
+      // Disable button to prevent multiple submissions
+      submitButton.disabled = true;
+      submitButton.innerHTML = 'Submitting...';
+
+      fetch('/add_review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: reviewName.value, text: reviewText.value })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status) {
+            notification.innerHTML = '<p>Terima kasih! Saran dan kesan Anda telah terkirim.</p>';
+            notification.style.backgroundColor = '#4CAF50'; // Hijau untuk sukses
+            notification.style.color = 'white';
+          } else {
+            notification.innerHTML = '<p>Terjadi kesalahan, coba lagi.</p>';
+            notification.style.backgroundColor = '#f44336'; // Merah untuk kesalahan
+            notification.style.color = 'white';
+          }
+
+          // Menambahkan notifikasi di bawah form
+          document.getElementById('review-form').prepend(notification);
+
+          // Reset form and button
+          reviewName.value = '';
+          reviewText.value = '';
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'KIRIM';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          notification.innerHTML = '<p>Terjadi kesalahan, coba lagi.</p>';
+          notification.style.backgroundColor = '#f44336';
+          notification.style.color = 'white';
+
+          // Menambahkan notifikasi di bawah form
+          document.getElementById('review-form').prepend(notification);
+
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'KIRIM';
+        });
+    });
+
+  </script>
+
+</body>
+
+</html>
