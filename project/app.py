@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 from transformers import pipeline
+import pickle
 from config import MYSQL_CONFIG, APP_SECRET_KEY
 from flask_mysqldb import MySQL
 from flask import Flask, render_template, request, jsonify
@@ -11,9 +12,31 @@ from werkzeug.security import generate_password_hash
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.security import check_password_hash
 import smtplib
+from langchain_community.vectorstores import FAISS  
 from email.mime.text import MIMEText
-
-
+import streamlit as st
+from langchain_community.document_loaders import PyPDFLoader
+import tempfile
+import pickle
+import torch 
+from flask import session
+from flask import render_template
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.chains import RetrievalQA
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import ConversationChain   
+from langchain.chains import create_retrieval_chain
+from langchain.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+from langchain.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.schema import Document
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from flask import Flask, request, jsonify
+from langchain_huggingface import HuggingFaceEmbeddings
 
 app = Flask(__name__)
 
@@ -26,10 +49,12 @@ app.config['MYSQL_DB'] = MYSQL_CONFIG['db']
 # Konfigurasi Flask
 app.secret_key = APP_SECRET_KEY
 
+groq_api_key = "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"
+file_path = os.path.join(os.getcwd(), 'model_save', 'chatbot', 'vectorstore.pkl')
+
 # Inisialisasi MySQL
 mysql = MySQL(app)
 
-# Muat model gambar
 MODEL_PATH = os.path.join('model', 'modelku.h5')  # Sesuaikan dengan lokasi model Anda
 try:
     model = load_model(MODEL_PATH) # Debugging untuk memastikan model berhasil dimuat
@@ -40,17 +65,103 @@ except Exception as e:
 # Daftar kelas yang digunakan oleh model gambar
 class_names = ['coklat kehitaman', 'sawo matang', 'kuning langsat']
 
+
 # Route untuk Beranda
 @app.route('/beranda')
 def beranda():
     return render_template('beranda.html')
-
+ 
 # Route untuk Chatbot
-@app.route('/chatbot')
+def initialize_llm(groq_api_key):
+    llm = ChatGroq(temperature=0, model_name="llama3-8b-8192", groq_api_key=groq_api_key)
+    return llm
+
+def initialize_embeddings():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_name = "BAAI/bge-small-en"
+    model_kwargs = {"device": device}
+    encode_kwargs = {"normalize_embeddings": True}
+    embeddings = HuggingFaceBgeEmbeddings(
+                model_name=model_name, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs
+    )
+    return embeddings
+
+def create_rag_chain(retriever, llm):
+    system_prompt = (
+        "Anda adalah asisten untuk tugas menjawab pertanyaan yang bernama gold. "
+        "Gunakan konteks yang diambil untuk menjawab "
+        "Menjawab menggunakan bahasa indonesia "
+        "Jika Anda tidak ada jawaban pada konteks, katakan saja saya tidak tahu dan berikan jawaban yang sesuai "
+        ". Gunakan maksimal empat kalimat dan pertahankan "
+        "jawaban singkat.\n\n"
+        "{context}"
+    )
+
+    retrieval_qa_chain = (
+        {"context": retriever, "question": RunnablePassthrough() }
+        | ChatPromptTemplate.from_messages([("system", system_prompt), ("human", "{question}")])
+        | llm
+        | StrOutputParser()
+    )
+    return retrieval_qa_chain
+
+def save_model(vectorstore, embeddings, save_dir):
+    os.makedirs(save_dir, exist_ok=True)
+
+    vectorstore_path = os.path.join(save_dir, "chatbot/vectorstore.pkl")
+    with open(vectorstore_path, "wb") as f:
+        pickle.dump(vectorstore, f)
+
+    embeddings_path = os.path.join(save_dir, "chatbot/embeddings.pkl")
+    with open(embeddings_path, "wb") as f:
+        pickle.dump(embeddings, f)
+
+@app.route('/chatbot', methods=['GET'])
 def chatbot():
     return render_template('chatbot.html')
 
-# Route untuk Deteksi, mendukung GET dan POST
+@app.route('/chatbot', methods=['POST'])
+def chat():
+    try:
+        data = request.get_json()
+        user_input = data.get("message")
+        
+        if not user_input:
+            return jsonify({"error": "Message is required"}), 400
+
+        # Ubah ini sesuai dengan path dan API key yang Anda gunakan
+        pdf_path = "C:/xampp/htdocs/project/data/datasetchatbot.pdf"
+        groq_api_key = "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"
+
+        # Initialize LLM and Embeddings
+        llm = initialize_llm(groq_api_key)
+        embeddings = initialize_embeddings()
+
+        # Load PDF and create vector store
+        pdf_loader = PyPDFLoader(pdf_path)
+        documents = pdf_loader.load()
+        vectorstore = FAISS.from_documents(documents, embeddings)
+        retriever = vectorstore.as_retriever()
+
+        # Save model and embeddings
+        save_model(vectorstore, embeddings, save_dir="model_save")
+
+        # Create RAG chain
+        rag_chain = create_rag_chain(retriever, llm)
+
+        # Get response from the model
+        response = rag_chain.invoke(user_input)
+        return jsonify({"response": response})
+
+    except Exception as e:
+        # Return the specific error message
+        print(f"Error: {str(e)}")  # This will print the error to the terminal
+        return jsonify({"error": str(e)}), 500
+
+    
+
+
+# Route untuk Deteksi
 @app.route('/deteksi', methods=['GET', 'POST'])
 def deteksi():
     if request.method == 'POST':
@@ -90,14 +201,50 @@ def deteksi():
     return render_template('deteksi.html')
 
 # Route untuk Profil
-@app.route('/profile')
+@app.route('/profil')
 def profil():
-    return render_template('profile.html')
+    # Cek apakah ada sesi pengguna yang sedang login
+    if 'user_id' not in session:
+        flash('Anda harus login terlebih dahulu!', 'warning')
+        return redirect(url_for('login'))  # Redirect ke halaman login jika pengguna belum login
+
+    # Ambil data pengguna berdasarkan user_id yang disimpan di sesi
+    user_id = session['user_id']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,))
+    user = cur.fetchone()
+    cur.close()
+
+    if user:
+        # Kirim data pengguna ke template
+        return render_template('profile.html', username=user[0], email=user[1])
+    else:
+        flash('Pengguna tidak ditemukan.', 'danger')
+        return redirect(url_for('login'))
+
 
 # Route untuk Outfit
 @app.route('/outfit')
 def outfit():
     return render_template('outfit.html')
+
+@app.route('/current_user', methods=['GET'])
+def current_user():
+    # Memeriksa apakah pengguna sudah login
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    # Ambil informasi pengguna dari sesi
+    user_id = session['user_id']
+    username = session['username']
+    email = session['email']
+
+    return jsonify({
+        'user_id': user_id,
+        'username': username,
+        'email': email
+    })
+
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
@@ -141,29 +288,39 @@ def login():
         cur.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cur.fetchone()
 
-        if user and check_password_hash(user[3], password):  # Misalkan password ada di index 3
+        if user and check_password_hash(user[3], password):  # Pastikan indeks password sesuai
+            # Simpan informasi pengguna di sesi
+            session['user_id'] = user[0]  # ID pengguna
+            session['username'] = user[1]  # Nama pengguna
+            session['email'] = user[2]  # Email pengguna
+            role = user[4]  # Pastikan indeks role sesuai dengan posisi kolom role di tabel
             flash('Login berhasil!', 'success')
-            return redirect(url_for('beranda'))  # Ganti dengan halaman yang sesuai
+
+            if role == 'admin':
+                return redirect(url_for('dashboard'))  # Ganti dengan route dashboard admin Anda
+            else:
+                return redirect(url_for('beranda'))  # Ganti dengan route beranda user Anda
         else:
             flash('Email atau password salah.', 'danger')
-    
+
     return render_template('login.html')
+
 
 # Route untuk Registrasi
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         # Ambil data dari form registrasi
-        username = request.form.get('username')  # Menggunakan get untuk menghindari KeyError
+        username = request.form.get('username') 
         email = request.form.get('email')
         password = request.form.get('password')
 
         # Validasi jika data tidak lengkap
         if not username or not email or not password:
             flash('Semua field harus diisi!', 'danger')
-            return render_template('register.html')  # Mengembalikan form registrasi jika ada field yang kosong
+            return render_template('register.html') 
 
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')  # Menggunakan pbkdf2:sha256
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256') 
 
         # Periksa apakah email sudah ada di database
         cur = mysql.connection.cursor()
@@ -219,7 +376,7 @@ def send_reset_email(to_email):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login(from_email, 'your_email_password')  # Masukkan password email Anda
+            server.login(from_email, 'your_email_password')  
             server.sendmail(from_email, to_email, msg.as_string())
             print("Email terkirim")
     except Exception as e:
@@ -243,7 +400,71 @@ def add_review():
         return jsonify({'status': 'success', 'name': name, 'text': text}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
+@app.route('/update_profile', methods=['GET', 'POST'])
+def update_profile():
+    if 'user_id' not in session:
+        flash('Anda harus login terlebih dahulu!', 'warning')
+        return redirect(url_for('login'))  # Redirect ke halaman login jika pengguna belum login
 
+    user_id = session['user_id']
+
+    # Ambil data pengguna berdasarkan user_id yang disimpan di sesi
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT username, email FROM users WHERE id = %s", (user_id,))
+    user = cur.fetchone()
+    cur.close()
+
+    if request.method == 'POST':
+        new_username = request.form['username']
+        new_email = request.form['email']
+
+        if not new_username or not new_email:
+            flash('Semua field harus diisi!', 'danger')
+            return render_template('profile.html', username=user[0], email=user[1])
+
+        try:
+            # Perbarui data pengguna
+            cur = mysql.connection.cursor()
+            cur.execute("UPDATE users SET username = %s, email = %s WHERE id = %s",
+                        (new_username, new_email, user_id))
+            mysql.connection.commit()
+            cur.close()
+
+            # Update sesi dengan data terbaru
+            session['username'] = new_username
+            session['email'] = new_email
+
+            flash('Profil berhasil diperbarui!', 'success')
+            return redirect(url_for('profil'))  # Redirect ke halaman profil setelah pembaruan
+        except Exception as e:
+            flash(f'Terjadi kesalahan: {str(e)}', 'danger')
+            return render_template('profile.html', username=user[0], email=user[1])
+
+    return render_template('profile.html', username=user[0], email=user[1])
+
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('admin/dashboard.html')
+
+@app.route('/profiladmin')
+def profiladmin():
+    return render_template('admin/profiladmin.html')
+
+@app.route('/ulasan')
+def ulasan():
+    return render_template('admin/ulasan.html')
+
+@app.route("/logout", methods=['GET', 'POST'])
+def logout():
+    # Hapus semua data sesi
+    session.clear()
+    # Flash pesan logout sukses
+    flash('Anda telah berhasil logout.', 'info')
+    # Redirect ke halaman login
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     # Pastikan folder 'uploads' ada untuk menyimpan file sementara
