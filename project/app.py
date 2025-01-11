@@ -37,14 +37,26 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from flask import Flask, request, jsonify
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+import logging
+from datetime import datetime
+from indobert import SentimentAnalyzer
+
 
 app = Flask(__name__)
+
+model_indobert = 'senti'
+analyzer_indobert = SentimentAnalyzer(model_indobert)
 
 # Konfigurasi MySQL
 app.config['MYSQL_HOST'] = MYSQL_CONFIG['host']
 app.config['MYSQL_USER'] = MYSQL_CONFIG['user']
 app.config['MYSQL_PASSWORD'] = MYSQL_CONFIG['password']
 app.config['MYSQL_DB'] = MYSQL_CONFIG['db']
+
+# Konfigurasi logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Konfigurasi Flask
 app.secret_key = APP_SECRET_KEY
@@ -63,7 +75,7 @@ except Exception as e:
     model = None
 
 # Daftar kelas yang digunakan oleh model gambar
-class_names = ['coklat kehitaman', 'sawo matang', 'kuning langsat']
+class_names = ['coklat kehitaman', 'sawo matang', 'kuning langsat', 'putih']
 
 
 # Route untuk Beranda
@@ -89,9 +101,8 @@ def initialize_embeddings():
 def create_rag_chain(retriever, llm):
     system_prompt = (
         "Anda adalah asisten untuk tugas menjawab pertanyaan yang bernama gold. "
-        "Gunakan konteks yang diambil untuk menjawab "
         "Menjawab menggunakan bahasa indonesia "
-        "Jika Anda tidak ada jawaban pada konteks, katakan saja saya tidak tahu dan berikan jawaban yang sesuai "
+        "Jika Anda tidak ada jawaban pada konteks, katakan saja menurut saya dan berikan jawaban yang sesuai "
         ". Gunakan maksimal empat kalimat dan pertahankan "
         "jawaban singkat.\n\n"
         "{context}"
@@ -123,39 +134,44 @@ def chatbot():
 @app.route('/chatbot', methods=['POST'])
 def chat():
     try:
+        logging.debug("Request received at /chatbot endpoint.")
         data = request.get_json()
+        logging.debug(f"Data received: {data}")
+
         user_input = data.get("message")
-        
         if not user_input:
+            logging.error("User input is missing.")
             return jsonify({"error": "Message is required"}), 400
 
-        # Ubah ini sesuai dengan path dan API key yang Anda gunakan
         pdf_path = "C:/xampp/htdocs/project/data/datasetchatbot.pdf"
         groq_api_key = "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"
+        logging.debug("Initializing LLM and embeddings...")
 
-        # Initialize LLM and Embeddings
         llm = initialize_llm(groq_api_key)
         embeddings = initialize_embeddings()
 
-        # Load PDF and create vector store
+        logging.debug("Loading PDF...")
         pdf_loader = PyPDFLoader(pdf_path)
         documents = pdf_loader.load()
+
+        logging.debug("Creating vector store...")
         vectorstore = FAISS.from_documents(documents, embeddings)
         retriever = vectorstore.as_retriever()
 
-        # Save model and embeddings
+        logging.debug("Saving model and embeddings...")
         save_model(vectorstore, embeddings, save_dir="model_save")
 
-        # Create RAG chain
+        logging.debug("Creating RAG chain...")
         rag_chain = create_rag_chain(retriever, llm)
 
-        # Get response from the model
+        logging.debug("Invoking RAG chain...")
         response = rag_chain.invoke(user_input)
+
+        logging.debug(f"Response generated: {response}")
         return jsonify({"response": response})
 
     except Exception as e:
-        # Return the specific error message
-        print(f"Error: {str(e)}")  # This will print the error to the terminal
+        logging.error(f"Error occurred: {str(e)}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
     
@@ -174,14 +190,18 @@ def deteksi():
             filepath = os.path.join('uploads', file.filename)
             try:
                 # Simpan file sementara
+                logging.debug(f"Saving uploaded file to {filepath}.")
                 file.save(filepath)
 
                 # Proses gambar
-                img = load_img(filepath, target_size=(150, 150))  # Sesuaikan ukuran input model
+                logging.debug("Processing image...")
+                img = load_img(filepath, target_size=(224, 224))  # Sesuaikan ukuran input model
                 img_array = img_to_array(img) / 255.0  # Normalisasi
                 img_array = np.expand_dims(img_array, axis=0)
+                logging.debug(f"Image shape before prediction: {img_array.shape}")
 
                 # Prediksi dengan model
+                logging.debug("Making predictions...")
                 if model:
                     predictions = model.predict(img_array)
                     class_index = np.argmax(predictions[0])
@@ -197,8 +217,11 @@ def deteksi():
                     'predictions': predictions[0].tolist() if model else []
                 })
             except Exception as e:
+                logging.error(f"Error during image processing: {str(e)}", exc_info=True)
                 return jsonify({'error': str(e)}), 500
     return render_template('deteksi.html')
+
+
 
 # Route untuk Profil
 @app.route('/profil')
@@ -455,7 +478,31 @@ def profiladmin():
 
 @app.route('/ulasan')
 def ulasan():
-    return render_template('admin/ulasan.html')
+    try:
+        # Ambil data ulasan dari database
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT text FROM reviews")
+        reviews = cur.fetchall()  # Mengambil semua ulasan
+        cur.close()
+
+        sentiment_results = []
+        for review in reviews:
+            review_text = review[0]  # Karena hasilnya berupa tuple
+            predicted_class, probabilities = analyzer_indobert.predict_sentiment(review_text)
+            sentiment = "Positif" if predicted_class == 1 else "Negatif"
+            sentiment_results.append({
+                "text": review_text,
+                "sentiment": sentiment
+            })
+
+        # Render hasil sentimen ke template
+        return render_template('admin/ulasan.html', sentiment_results=sentiment_results)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 @app.route("/logout", methods=['GET', 'POST'])
 def logout():
